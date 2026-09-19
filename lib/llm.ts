@@ -24,7 +24,7 @@ function parseJson(value: string): unknown {
 }
 
 function transcript(messages: ChatMessage[]) {
-  return messages.map((message) => `${message.role === "user" ? "Customer" : "Clarity"}: ${message.content}`).join("\n\n");
+  return messages.map((message) => `${message.role === "user" ? "Customer" : "AskJev"}: ${message.content}`).join("\n\n");
 }
 
 async function callOllama(args: {

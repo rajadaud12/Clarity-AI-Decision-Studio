@@ -15,7 +15,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Clarity — Decision Studio",
+  title: "AskJev — Decision Intelligence",
   description: "Turn an uncertain question into a clear, evidence-shaped decision.",
   icons: {
     icon: [

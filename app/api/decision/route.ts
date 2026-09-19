@@ -25,9 +25,11 @@ export async function POST(request: Request) {
       schemaName: "jev_decision_plan",
     });
 
+    console.log(`\n>>> [Server: /api/decision] Starting decision evaluation with provider=${input.provider}...`);
     const plan = normalizePlan(jevPlanSchema.parse(rawPlan));
     const result = await evaluateWithJev(plan, input.parameters);
     const composite = composeDecision(plan, result);
+    console.log(`>>> [Server: /api/decision] JEV evaluation finished successfully. Recommended: ${composite.recommendedOption || "none"}\n`);
 
     return NextResponse.json({ plan, result, composite, generatedBy: input.provider });
   } catch (error) {

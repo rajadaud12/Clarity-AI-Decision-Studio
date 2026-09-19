@@ -339,6 +339,19 @@ export async function evaluateWithJev(plan: JevPlan, parameters: DecisionParamet
   const payload = buildJevPayload(plan, parameters);
   const endpoint = process.env.TYPESAFE_BASE_URL || "https://api.typesafe.ai/v1/systemone";
 
+  console.log("\n==================== [JEV API OUTGOING REQUEST] ====================");
+  console.log(`[JEV API] Timestamp: ${new Date().toISOString()}`);
+  console.log(`[JEV API] Method: POST`);
+  console.log(`[JEV API] Endpoint: ${endpoint}`);
+  console.log(`[JEV API] Model: ${payload.model}`);
+  console.log(`[JEV API] Decision Question: ${payload.state.decision.question}`);
+  console.log(`[JEV API] Candidates (${Object.keys(payload.state.candidates).length}): ${Object.keys(payload.state.candidates).join(", ")}`);
+  console.log(`[JEV API] Criteria (${Object.keys(payload.state.evaluation_policy.criteria).length}): ${Object.keys(payload.state.evaluation_policy.criteria).join(", ")}`);
+  console.log(`[JEV API] Questions Count: ${Object.keys(payload.questions).length}`);
+  console.log("[JEV API] FULL JSON PAYLOAD BEING SENT:");
+  console.log(JSON.stringify(payload, null, 2));
+  console.log("====================================================================\n");
+
   let lastError: Error = new Error("JEV evaluation failed.");
 
   for (let attempt = 0; attempt < 3; attempt += 1) {

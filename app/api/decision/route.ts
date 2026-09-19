@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { buildJevPayload, composeDecision, evaluateWithJev, normalizePlan } from "@/lib/jev";
+import { composeDecision, evaluateWithJev, normalizePlan } from "@/lib/jev";
 import { generateStructured } from "@/lib/llm";
 import { JEV_ARCHITECT_PROMPT } from "@/lib/prompts";
 import { decisionRequestSchema, jevPlanSchema, JEV_PLAN_JSON_SCHEMA } from "@/lib/schemas";
@@ -26,11 +26,10 @@ export async function POST(request: Request) {
     });
 
     const plan = normalizePlan(jevPlanSchema.parse(rawPlan));
-    const payload = buildJevPayload(plan, input.parameters);
     const result = await evaluateWithJev(plan, input.parameters);
     const composite = composeDecision(plan, result);
 
-    return NextResponse.json({ plan, result, composite, generatedBy: input.provider, jevPayload: payload });
+    return NextResponse.json({ plan, result, composite, generatedBy: input.provider });
   } catch (error) {
     const message = error instanceof ZodError
       ? "The decision engine returned an unexpected structured response. Please try the analysis again."

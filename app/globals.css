@@ -467,6 +467,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .histogram-column--lead .histogram-rank-tag { background: var(--coral-soft); color: var(--coral-dark); border: 1px solid rgba(255, 107, 53, .18); }
 .histogram-option-name { font-size: 13.5px; font-weight: 750; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
 .histogram-conf { font-size: 11.5px; color: var(--soft); font-weight: 600; }
+.histogram-conf--risk { color: var(--danger); }
 
 .review-notice { margin: 16px 0 0; background: var(--amber-soft); border: 1px solid #ead9af; color: #77571c; }
 .review-notice svg { flex: 0 0 auto; margin-top: 1px; }

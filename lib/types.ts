@@ -113,6 +113,7 @@ export type CompositeRanking = {
   coverage: number;
   eligible: boolean;
   constraintProbability: number | null;
+  constraintCertainty: number | null;
 };
 
 export type CompositeDecision = {

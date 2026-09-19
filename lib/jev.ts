@@ -339,16 +339,6 @@ export async function evaluateWithJev(plan: JevPlan, parameters: DecisionParamet
   const payload = buildJevPayload(plan, parameters);
   const endpoint = process.env.TYPESAFE_BASE_URL || "https://api.typesafe.ai/v1/systemone";
 
-  console.log("\n==================== [JEV API OUTGOING PAYLOAD] ====================");
-  console.log(`Timestamp: ${new Date().toISOString()}`);
-  console.log(`Endpoint: ${endpoint}`);
-  console.log(`Model: ${payload.model}`);
-  console.log(`Decision Question: ${payload.state.decision.question}`);
-  console.log(`Candidates: ${Object.keys(payload.state.candidates).join(", ")}`);
-  console.log(`Questions Count: ${Object.keys(payload.questions).length}`);
-  console.log("FULL PAYLOAD SENT TO JEV API:\n" + JSON.stringify(payload, null, 2));
-  console.log("====================================================================\n");
-
   let lastError: Error = new Error("JEV evaluation failed.");
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -434,10 +424,13 @@ export function composeDecision(plan: JevPlan, result: JevResult): CompositeDeci
       optionKey: option.key,
       label: option.label,
       score: coveredWeight > 0 ? weightedScore / coveredWeight : diagnostic?.probabilities[option.key] || 0,
-      confidence: coveredWeight > 0 ? Math.min(scoreConfidence, constraintCertainty) : diagnostic?.confidence || 0,
+      // Noul has no confidence field in the TypeSafe API. Keep score confidence
+      // faithful to Jev's Score outputs and expose constraint uncertainty separately.
+      confidence: coveredWeight > 0 ? scoreConfidence : diagnostic?.confidence || 0,
       coverage: Math.min(1, coveredWeight || (diagnostic ? 1 : 0)),
       eligible: constraints.every((probability) => probability >= HARD_CONSTRAINT_PASS),
       constraintProbability: constraints.length ? Math.min(...constraints) : null,
+      constraintCertainty: constraints.length ? constraintCertainty : null,
     };
   });
 

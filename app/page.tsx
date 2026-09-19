@@ -251,6 +251,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
   const confidence = decision.composite?.confidence ?? choiceAnswer?.confidence;
   const rankings = decision.composite?.rankings || [];
   const needsReview = Boolean(decision.composite?.needsReview);
+  const hasEligibleOption = rankings.some((ranking) => ranking.eligible);
   const hardConstraints = decision.plan.questions.filter((question) => question.type === "noul" && question.hardConstraint);
 
   function criterionScore(optionKey: string, criterionKey: string) {
@@ -288,7 +289,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
     const text = [
       `DECISION EVALUATION: ${decision.plan.title}`,
       `Question: ${decision.plan.decisionQuestion}`,
-      `\n${needsReview ? "LEADING PATH — REVIEW REQUIRED" : "RECOMMENDED PATH"}: ${recommendation} (${confidence !== undefined ? percent(confidence) : ""} confidence)`,
+      `\n${!hasEligibleOption ? "NO OPTION CLEARED — TOP FIT" : needsReview ? "LEADING PATH — REVIEW REQUIRED" : "RECOMMENDED PATH"}: ${recommendation} (${confidence !== undefined ? percent(confidence) : ""} score confidence)`,
       `${recommendationDescription || ""}`,
       `\nRANKED OPTIONS:`,
       ...rankings.map((r, i) => `${i + 1}. ${r.label} — ${percent(r.score)} fit (${percent(r.confidence)} confidence)`),
@@ -323,12 +324,12 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
 
       <section className="recommendation-card">
         <div className="recommendation-copy">
-          <span className="card-kicker">{needsReview ? "Leading path · Review before deciding" : "Recommended path · Top evaluated fit"}</span>
+          <span className="card-kicker">{!hasEligibleOption ? "No option cleared · Best-scoring candidate" : needsReview ? "Leading path · Review before deciding" : "Recommended path · Top evaluated fit"}</span>
           <h2>{recommendation}</h2>
           <p>{recommendationDescription || "JEV evaluated the confirmed brief against the typed decision criteria."}</p>
           <div className="recommendation-meta">
             <span className="meta-badge meta-badge--highlight"><Award size={15} /> {topRanking ? `${percent(topRanking.score)} overall fit` : "Top overall fit"}</span>
-            <span className="meta-badge"><Gauge size={15} /> {confidence !== undefined ? `${percent(confidence)} engine confidence` : "Typed evaluation"}</span>
+            <span className="meta-badge"><Gauge size={15} /> {confidence !== undefined ? `${percent(confidence)} score confidence` : "Typed evaluation"}</span>
             {leadMargin !== null && leadMargin > 0 && (
               <span className="meta-badge"><CheckCircle2 size={15} /> +{leadMargin}% ahead of 2nd option</span>
             )}
@@ -344,7 +345,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
           <div className="confidence-orbit" style={{ "--score": `${confidence * 360}deg` } as React.CSSProperties}>
             <div>
               <strong>{percent(confidence)}</strong>
-              <span>confidence</span>
+              <span>score confidence</span>
             </div>
           </div>
         )}
@@ -354,22 +355,24 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
       <section className="report-takeaway-card">
         <div className="takeaway-header">
           <Award size={18} />
-          <h3>{needsReview ? "Why this option currently leads" : "Why this option won"}</h3>
+          <h3>{!hasEligibleOption ? "Why this candidate scored highest" : needsReview ? "Why this option currently leads" : "Why this option won"}</h3>
         </div>
         <div className="takeaway-grid">
           <div className="takeaway-item">
-            <strong>Strongest overall fit</strong>
+            <strong>{hasEligibleOption ? "Strongest overall fit" : "Highest evaluated fit"}</strong>
             <p><strong>{recommendation}</strong> ranked #1 with an overall fit score of <strong>{topRanking ? percent(topRanking.score) : "highest"}</strong> based on your weighted criteria.</p>
           </div>
           {runnerUp && (
             <div className="takeaway-item">
               <strong>Comparison with alternatives</strong>
-              <p>Ranked ahead of <strong>{runnerUp.label}</strong> ({percent(runnerUp.score)} fit){leadMargin !== null && leadMargin > 0 ? ` by a clear +${leadMargin}% margin` : ""}.</p>
+              <p>{hasEligibleOption ? "Among options that cleared the non-negotiables, ranked" : "Ranked"} ahead of <strong>{runnerUp.label}</strong> ({percent(runnerUp.score)} fit){leadMargin !== null && leadMargin > 0 ? ` by ${leadMargin} percentage points` : ""}.</p>
             </div>
           )}
           <div className="takeaway-item">
             <strong>Recommended next step</strong>
-            <p>{needsReview
+            <p>{!hasEligibleOption
+              ? <>Do not choose yet. Verify the failed or uncertain non-negotiables for <strong>{recommendation}</strong> and the alternatives.</>
+              : needsReview
               ? <>Validate the flagged uncertainty before committing to <strong>{recommendation}</strong>.</>
               : <>Proceed with planning around <strong>{recommendation}</strong>, addressing any specific risks outlined below.</>}
             </p>
@@ -395,7 +398,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
               <span className="eyebrow eyebrow--coral"><BarChart3 size={13} /> Fit distribution</span>
               <h2>Option fit comparison</h2>
             </div>
-            <span className="histogram-subtag">Normalized fit score</span>
+            <span className="histogram-subtag">Constraint eligibility first · then fit</span>
           </div>
           <div className="minimal-histogram">
             <div className="histogram-gridlines">
@@ -420,9 +423,11 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
                       </div>
                     </div>
                     <div className="histogram-label-wrap">
-                      <span className="histogram-rank-tag">{isLead ? "#1 Pick" : `#${index + 1}`}</span>
+                      <span className="histogram-rank-tag">{isLead ? (hasEligibleOption ? "#1 Pick" : "Top fit") : `#${index + 1}`}</span>
                       <strong className="histogram-option-name" title={ranking.label}>{ranking.label}</strong>
-                      <small className="histogram-conf">{percent(ranking.confidence)} conf</small>
+                      <small className={`histogram-conf ${!ranking.eligible ? "histogram-conf--risk" : ""}`}>
+                        {percent(ranking.confidence)} conf{!ranking.eligible ? " · constraint risk" : ""}
+                      </small>
                     </div>
                   </div>
                 );
@@ -446,7 +451,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
           <strong>{Object.keys(decision.result.answers).length}</strong>
         </div>
         <div>
-          <span>Decision confidence</span>
+          <span>Score confidence</span>
           <strong>{confidence !== undefined ? percent(confidence) : "—"}</strong>
         </div>
       </div>
@@ -474,15 +479,16 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
                     <div className="option-rank-title-row">
                       <h3>{ranking.label}</h3>
                       {isLead ? (
-                        <span className="recommended-pill">{needsReview ? "Leading option" : "Recommended"}</span>
+                        <span className="recommended-pill">{!hasEligibleOption ? "Top fit only" : needsReview ? "Leading option" : "Recommended"}</span>
                       ) : (
                         <span className="alternative-pill">Alternative {index + 1}</span>
                       )}
                     </div>
                     <p>{option?.description}</p>
                     <div className="option-tags">
-                      <span>{percent(ranking.confidence)} confidence</span>
+                      <span>{percent(ranking.confidence)} score confidence</span>
                       <span>{percent(ranking.coverage)} criteria coverage</span>
+                      {ranking.constraintProbability !== null && <span>{percent(ranking.constraintProbability)} weakest constraint pass</span>}
                       {!ranking.eligible && <span className="constraint-pill">Constraint risk</span>}
                     </div>
                   </div>
@@ -512,7 +518,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
             {decision.plan.options.map((option) => (
               <div className="matrix-option" key={option.key}>
                 <strong>{option.label}</strong>
-                {option.key === topRanking?.optionKey && <span className="matrix-winner-tag">#1 Pick</span>}
+                {option.key === topRanking?.optionKey && <span className="matrix-winner-tag">{hasEligibleOption ? "#1 Pick" : "Top fit"}</span>}
               </div>
             ))}
             {decision.plan.criteria.flatMap((criterion) => {
@@ -716,8 +722,15 @@ export default function Home() {
             : undefined,
         }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "The interview could not continue.");
+      const rawBody = await response.text();
+      let body: unknown = null;
+      try { body = JSON.parse(rawBody); } catch { /* show a useful recovery message below */ }
+      if (!response.ok) {
+        const message = typeof body === "object" && body && "error" in body && typeof body.error === "string"
+          ? body.error
+          : "AskJev could not continue this response. Please retry in a moment.";
+        throw new Error(message);
+      }
       const nextTurn = body as InterviewTurn;
       setTurn(nextTurn);
       const hasQuestion = nextTurn.stage === "interviewing" && Boolean(nextTurn.question.prompt);
@@ -790,7 +803,6 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      console.log(">>> [AskJev] Dispatched brief to /api/decision. Evaluating with JEV API...");
       const response = await fetch("/api/decision", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -798,12 +810,6 @@ export default function Home() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "JEV could not complete the evaluation.");
-      if (body.jevPayload) {
-        console.log("==================== [JEV API OUTGOING PAYLOAD] ====================");
-        console.log("Exact payload evaluated by JEV API (https://api.typesafe.ai/v1/systemone):", body.jevPayload);
-        console.log("Formatted JSON:\n" + JSON.stringify(body.jevPayload, null, 2));
-        console.log("====================================================================");
-      }
       setDecision(body as DecisionResponse);
       requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
     } catch (reason) {

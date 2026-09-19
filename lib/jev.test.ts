@@ -255,4 +255,29 @@ describe("deterministic decision composition", () => {
     expect(composite.needsReview).toBe(true);
     expect(composite.reviewReason).toMatch(/cross-check disagrees/i);
   });
+
+  it("does not mislabel a 50/50 Noul as zero Score confidence", () => {
+    const normalized = normalizePlan(plan);
+    const result: JevResult = {
+      model: "jev-test",
+      answers: {
+        agency_speed: score(2, 0.8),
+        in_house_speed: score(1, 0.8),
+        agency_deadline: { type: "noul", noul: 0.5 },
+        in_house_deadline: { type: "noul", noul: 0.5 },
+        agency_control: score(2, 0.8),
+        in_house_control: score(1, 0.8),
+        diagnostic_best_option: {
+          type: "choice",
+          choice: "agency",
+          probabilities: { agency: 0.7, in_house: 0.3 },
+          confidence: 0.7,
+        },
+      },
+    };
+    const composite = composeDecision(normalized, result);
+    expect(composite.confidence).toBeCloseTo(0.8);
+    expect(composite.rankings[0].constraintCertainty).toBe(0);
+    expect(composite.needsReview).toBe(true);
+  });
 });

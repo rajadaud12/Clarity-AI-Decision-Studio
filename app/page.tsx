@@ -497,6 +497,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
             <span className="eyebrow">Criteria breakdown</span>
             <h2>Detailed criteria matrix</h2>
           </div>
+          <span className="matrix-scroll-hint">Swipe sideways to compare options →</span>
         </div>
         <div className="matrix-scroll">
           <div className="decision-matrix" style={{ gridTemplateColumns: `minmax(220px, 1.4fr) repeat(${decision.plan.options.length}, minmax(140px, 1fr))` }}>
@@ -862,7 +863,25 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <div className="conversation-heading"><div><span className="eyebrow">Clarifying your decision</span><h1>Let’s find the clearest path.</h1><p>Choose an option or add your own answer.</p></div><div className="conversation-tools">{turn && <span className="readiness-pill"><i style={{ width: `${turn.completionScore}%` }} /><b>{Math.round(turn.completionScore)}%</b> ready</span>}<button className="icon-button" onClick={reset} title="Start over"><RotateCcw size={17} /></button></div></div>
+                <div className="conversation-heading">
+                  <div className="conversation-heading__copy">
+                    <span className="eyebrow">Clarifying your decision</span>
+                    <h1>Let’s find the clearest path.</h1>
+                    <p>Choose an option or add your own answer.</p>
+                  </div>
+                  <div className="conversation-tools">
+                    {turn && (
+                      <span className="readiness-pill" title={`${Math.round(turn.completionScore)}% ready`}>
+                        <i style={{ width: `${turn.completionScore}%` }} />
+                        <b>{Math.round(turn.completionScore)}%</b>
+                        <span className="readiness-label">ready</span>
+                      </span>
+                    )}
+                    <button className="icon-button" onClick={reset} title="Start over" aria-label="Start over">
+                      <RotateCcw size={17} />
+                    </button>
+                  </div>
+                </div>
                 <div className="messages">
                   {messages.map((message, index) => (
                     <MessageBubble

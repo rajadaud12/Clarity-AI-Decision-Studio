@@ -497,6 +497,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .option-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .option-tags span { padding: 5px 10px; background: #eef1f4; color: #65707b; }
 .option-tags .constraint-pill { color: var(--danger); background: #fff0ec; }
+
+.option-specs-row { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 4px 0 10px; }
+.option-spec-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; background: #f2f4f7; border: 1px solid #e2e6eb; border-radius: 6px; padding: 3px 8px; line-height: 1.35; }
+.option-spec-tag .spec-key { text-transform: capitalize; color: #6b7582; font-weight: 650; }
+.option-spec-tag .spec-val { color: var(--ink); font-weight: 750; }
+.option-evidence-box { font-size: 11.5px; line-height: 1.45; color: #5a6572; background: #f8fafc; border-left: 3px solid var(--coral); padding: 6px 10px; border-radius: 0 6px 6px 0; margin: 6px 0 10px; }
+.option-evidence-box .evidence-title { font-weight: 750; color: var(--ink); margin-right: 4px; }
 .option-score { text-align: right; }
 .option-score strong, .option-score span { display: block; }
 .option-score strong { font-size: 26px; font-weight: 800; letter-spacing: -1px; }

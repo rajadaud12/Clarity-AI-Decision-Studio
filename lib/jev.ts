@@ -60,7 +60,22 @@ export function normalizePlan(plan: JevPlan): JevPlan {
     const key = uniqueId(option.key || option.label, optionKeys, index);
     if (!optionAliases.has(option.key)) optionAliases.set(option.key, key);
     if (!optionAliases.has(safeId(option.key, index))) optionAliases.set(safeId(option.key, index), key);
-    return { ...option, key };
+
+    const rawOption = option as Record<string, unknown>;
+    const knownKeys = new Set(["key", "label", "description", "attributes", "evidence"]);
+    const extraAttributes: Record<string, string | number | string[] | boolean> = {};
+    Object.entries(rawOption).forEach(([k, v]) => {
+      if (!knownKeys.has(k) && (typeof v === "string" || typeof v === "number" || typeof v === "boolean" || Array.isArray(v))) {
+        extraAttributes[k] = v as string | number | string[] | boolean;
+      }
+    });
+
+    const attributes = {
+      ...extraAttributes,
+      ...(option.attributes || {}),
+    };
+
+    return { ...option, key, attributes };
   });
 
   const criterionKeys = new Set<string>();
@@ -259,10 +274,17 @@ export function buildJevPayload(plan: JevPlan, parameters: DecisionParameter[], 
         safeId(parameter.key, index),
         { label: parameter.label, value: parameter.value },
       ])),
-      candidates: Object.fromEntries(plan.options.map((option) => [
-        option.key,
-        { label: option.label, description: option.description },
-      ])),
+      candidates: Object.fromEntries(plan.options.map((option) => {
+        const candidateData: Record<string, unknown> = {
+          label: option.label,
+          description: option.description,
+          ...(option.attributes || {}),
+        };
+        if (option.evidence) {
+          candidateData.evidence = option.evidence;
+        }
+        return [option.key, candidateData];
+      })),
       evaluation_policy: {
         composition: "Weighted scores determine fit. Hard constraints gate eligibility. The overall Choice is diagnostic only.",
         criteria: Object.fromEntries(plan.criteria.map((criterion) => [

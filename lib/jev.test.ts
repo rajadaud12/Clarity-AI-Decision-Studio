@@ -126,6 +126,38 @@ describe("JEV plan normalization", () => {
       in_house: "Internal team",
     });
   });
+
+  it("unpacks candidate attributes and evidence directly into state.candidates", () => {
+    const groundedPlan: JevPlan = {
+      ...plan,
+      options: [
+        {
+          key: "asus_g14",
+          label: "ASUS ROG Zephyrus G14",
+          description: "Compact 14-inch gaming laptop",
+          attributes: {
+            price: 1399,
+            weight: "1.72 kg",
+            battery: "10 hours",
+            gpu: "RTX 4060",
+            ram: "16 GB",
+            ports: ["HDMI", "USB-A", "USB-C"],
+            availability: "In stock",
+          },
+          evidence: "Official ASUS technical specification sheet and verified benchmarks",
+        },
+      ],
+    };
+    const normalized = normalizePlan(groundedPlan);
+    const body = buildJevPayload(normalized, [], "jev-latest");
+    const candidate = body.state.candidates.asus_g14;
+    expect(candidate.label).toBe("ASUS ROG Zephyrus G14");
+    expect(candidate.price).toBe(1399);
+    expect(candidate.weight).toBe("1.72 kg");
+    expect(candidate.battery).toBe("10 hours");
+    expect(candidate.gpu).toBe("RTX 4060");
+    expect(candidate.evidence).toContain("technical specification sheet");
+  });
 });
 
 describe("JEV response handling", () => {

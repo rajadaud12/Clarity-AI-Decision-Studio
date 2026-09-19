@@ -51,6 +51,8 @@ export type DecisionOption = {
   key: string;
   label: string;
   description: string;
+  attributes?: Record<string, string | number | string[] | boolean>;
+  evidence?: string;
 };
 
 export type DecisionCriterion = {

@@ -11,11 +11,18 @@ export const maxDuration = 120;
 export async function POST(request: Request) {
   try {
     const input = decisionRequestSchema.parse(await request.json());
+    const conversationContext = input.messages
+      .filter((m) => m.content.trim())
+      .slice(-10)
+      .map((m) => `${m.role === "user" ? "User" : "AskJev"}: ${m.content}`)
+      .join("\n");
+
     const architectInput = [
-      `Confirmed summary:\n${input.summary}`,
-      "Confirmed parameters:",
+      `Confirmed decision summary:\n${input.summary}`,
+      "Confirmed parameters & requirements:",
       JSON.stringify(input.parameters, null, 2),
-    ].join("\n\n");
+      conversationContext ? `Recent interview conversation context:\n${conversationContext}` : "",
+    ].filter(Boolean).join("\n\n");
 
     const rawPlan = await generateStructured({
       provider: input.provider,

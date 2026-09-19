@@ -485,6 +485,24 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
                       )}
                     </div>
                     <p>{option?.description}</p>
+                    {option?.attributes && Object.keys(option.attributes).length > 0 && (
+                      <div className="option-specs-row">
+                        {Object.entries(option.attributes).map(([key, val]) => {
+                          const displayVal = Array.isArray(val) ? val.join(", ") : String(val);
+                          return (
+                            <span className="option-spec-tag" key={key}>
+                              <span className="spec-key">{key}:</span>
+                              <span className="spec-val">{displayVal}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {option?.evidence && (
+                      <div className="option-evidence-box">
+                        <span className="evidence-title">Verified Evidence:</span> {option.evidence}
+                      </div>
+                    )}
                     <div className="option-tags">
                       <span>{percent(ranking.confidence)} score confidence</span>
                       <span>{percent(ranking.coverage)} criteria coverage</span>

@@ -165,7 +165,9 @@ const optionSchema = z.object({
 const decisionOptionSchema = z.object({
   key: z.string().min(1).max(80),
   label: z.string().min(1).max(120),
-  description: z.string().min(1).max(600),
+  description: z.string().min(1).max(800),
+  attributes: z.record(z.string(), z.union([z.string(), z.number(), z.array(z.string()), z.boolean()])).default({}),
+  evidence: z.string().max(2000).default(""),
 });
 
 const decisionCriterionSchema = z.object({
@@ -292,9 +294,18 @@ export const JEV_PLAN_JSON_SCHEMA = {
       maxItems: 6,
       items: {
         type: "object",
-        additionalProperties: false,
+        additionalProperties: true,
         required: ["key", "label", "description"],
-        properties: { key: { type: "string" }, label: { type: "string" }, description: { type: "string" } },
+        properties: {
+          key: { type: "string" },
+          label: { type: "string" },
+          description: { type: "string" },
+          attributes: {
+            type: "object",
+            description: "Concrete candidate data, specifications, pricing, benchmarks, ports, and evidence matching the brief",
+          },
+          evidence: { type: "string" },
+        },
       },
     },
     criteria: {

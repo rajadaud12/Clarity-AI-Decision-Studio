@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   ArrowRight,
   Award,
   BarChart3,
@@ -48,7 +47,7 @@ type SavedChat = {
   decision: DecisionResponse | null;
 };
 
-const RECENT_CHATS_KEY = "clarity-recent-chats";
+const RECENT_CHATS_KEY = "askjev-recent-chats";
 
 const starters = [
   {
@@ -158,12 +157,10 @@ function SettingsModal({
 
 function MessageBubble({
   message,
-  provider,
   onSuggestion,
   onCancelRevision,
 }: {
   message: ChatMessage;
-  provider: Provider;
   onSuggestion?: (suggestion: string) => void;
   onCancelRevision?: () => void;
 }) {
@@ -182,7 +179,7 @@ function MessageBubble({
     <div className={`message-row ${assistant ? "message-row--assistant" : "message-row--user"}`}>
       {assistant && <div className="assistant-avatar"><BotLogo /></div>}
       <div className="message-wrap">
-        {assistant && <span className="message-author">Clarity <small>{provider === "ollama" ? "Ollama" : "OpenAI"}</small></span>}
+        {assistant && <span className="message-author">AskJev</span>}
         {question?.prompt ? (
           <div className="message-bubble message-bubble--question">
             {message.intro && <p className="question-intro">{message.intro}</p>}
@@ -267,7 +264,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
   const runnerUp = rankings[1];
   const leadMargin = topRanking && runnerUp ? Math.round((topRanking.score - runnerUp.score) * 100) : null;
 
-  const criterionWinners = useMemo(() => {
+  const criterionWinners = (() => {
     const winners = new Map<string, string>();
     decision.plan.criteria.forEach((criterion) => {
       let maxScore = -1;
@@ -284,7 +281,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
       }
     });
     return winners;
-  }, [decision]);
+  })();
 
   function copySummary() {
     const text = [
@@ -619,8 +616,8 @@ export default function Home() {
   const parameters = turn?.parameters || [];
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("clarity-provider") as Provider | null;
-    const storedChats = window.localStorage.getItem(RECENT_CHATS_KEY);
+    const saved = (window.localStorage.getItem("askjev-provider") || window.localStorage.getItem("clarity-provider")) as Provider | null;
+    const storedChats = window.localStorage.getItem(RECENT_CHATS_KEY) || window.localStorage.getItem("clarity-recent-chats");
     queueMicrotask(() => {
       setMounted(true);
       setChatId(uid());
@@ -661,11 +658,9 @@ export default function Home() {
     });
   }, [chatId, decision, messages, mounted, provider, turn]);
 
-  const providerLabel = useMemo(() => (provider === "ollama" ? "gpt-oss:120b" : "gpt-5.6-luna"), [provider]);
-
   function setProvider(next: Provider) {
     setProviderState(next);
-    window.localStorage.setItem("clarity-provider", next);
+    window.localStorage.setItem("askjev-provider", next);
   }
 
   function reset() {
@@ -785,12 +780,6 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      console.log(">>> [Clarity UI] Confirming decision & dispatching to /api/decision:", {
-        provider,
-        parametersCount: turn.parameters.length,
-        parameters: turn.parameters,
-        summary: turn.summary,
-      });
       const response = await fetch("/api/decision", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -799,6 +788,7 @@ export default function Home() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "JEV could not complete the evaluation.");
       setDecision(body as DecisionResponse);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Something went wrong.");
     } finally {
@@ -820,7 +810,7 @@ export default function Home() {
       <div className="app-layout">
         <aside className={`history-sidebar ${sidebarOpen ? "history-sidebar--open" : ""}`}>
           <div className="sidebar-brand-row">
-            <button className="brand" onClick={reset} aria-label="Clarity home"><span className="brand-mark"><BotLogo /></span><span>Clarity</span></button>
+            <button className="brand" onClick={reset} aria-label="AskJev home"><span className="brand-mark"><BotLogo /></span><span>AskJev</span></button>
             <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar"><X size={18} /></button>
           </div>
           <button className="new-chat-button" onClick={reset}><Plus size={16} /> New decision</button>
@@ -832,15 +822,14 @@ export default function Home() {
               </button>
             )) : <p>Your recent decisions will appear here.</p>}
           </div>
-          <button className="sidebar-settings" onClick={() => setSettingsOpen(true)}><Settings2 size={16} /><span>Settings</span><small>{providerLabel}</small></button>
+          <button className="sidebar-settings" onClick={() => setSettingsOpen(true)}><Settings2 size={16} /><span>Settings</span></button>
         </aside>
         {sidebarOpen && <button className="sidebar-scrim" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" />}
 
         <div className="main-column">
           <header className="topbar">
             <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open recent chats"><Menu size={19} /></button>
-            <span className="topbar-title">{hasConversation ? recentChats.find((chat) => chat.id === chatId)?.title || "Current decision" : "Clarity"}</span>
-            <button className="model-selector" onClick={() => setSettingsOpen(true)}><ModelMark provider={provider} /><span>{providerLabel}</span><Settings2 size={15} /></button>
+            <span className="topbar-title">{hasConversation ? recentChats.find((chat) => chat.id === chatId)?.title || "Current decision" : "AskJev"}</span>
           </header>
 
           <section className="workspace">
@@ -849,9 +838,9 @@ export default function Home() {
               <DecisionReport decision={decision} parameters={parameters} onReset={reset} />
             ) : !hasConversation ? (
               <div className="welcome">
-                <span className="welcome-kicker"><BotLogo className="welcome-kicker-logo" /> Guided decision clarity</span>
+                <span className="welcome-kicker"><BotLogo className="welcome-kicker-logo" /> Guided decisions</span>
                 <h1>Move from uncertainty<br /><span>to a decision you trust.</span></h1>
-                <p>Share the decision in your own words. Clarity asks only what matters, then evaluates your options with JEV.</p>
+                <p>Share the decision in your own words. AskJev asks only what matters, then evaluates your options with JEV.</p>
                 <form className="hero-composer" onSubmit={handleSubmit}>
                   <div className="hero-input"><textarea ref={textareaRef} value={input} onChange={(event) => setInput(event.target.value)} placeholder="What are you trying to decide?" rows={3} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(input); } }} /></div>
                   <div className="composer-footer"><span>Start with the rough version—we’ll clarify it together.</span><button type="submit" disabled={!input.trim()} aria-label="Continue"><ArrowRight size={18} /></button></div>
@@ -887,7 +876,6 @@ export default function Home() {
                     <MessageBubble
                       key={message.id}
                       message={message}
-                      provider={provider}
                       onSuggestion={index === messages.length - 1 && message.role === "assistant" && !busy ? send : undefined}
                       onCancelRevision={confirmationBackup && index === messages.length - 1 ? cancelRevision : undefined}
                     />

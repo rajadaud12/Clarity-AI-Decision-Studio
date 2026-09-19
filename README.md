@@ -7,8 +7,8 @@ A guided decision application built with Next.js. AskJev turns an ambiguous requ
 1. **Discover** — Ollama Cloud (`gpt-oss:120b`) or OpenAI (`gpt-5.6-luna`) asks adaptive follow-up questions.
 2. **Structure** — stable facts become a live decision brief; material gaps stay visible.
 3. **Confirm** — the customer approves the complete understanding or enters the “What did I miss?” revision loop.
-4. **Architect** — the selected LLM turns the confirmed brief into a JEV state plus atomic Choice, Score, and Noul questions.
-5. **Decide** — JEV returns typed answers, probabilities, and confidence for the visual decision report.
+4. **Architect** — the selected LLM turns the confirmed brief into structured candidates, weighted criteria, explicit hard constraints, and atomic Choice, Score, and Noul questions.
+5. **Decide** — JEV evaluates every option × criterion and option × constraint independently; application code composes the typed answers and uses one overall Choice only as a disagreement check.
 
 ## Setup
 
@@ -37,7 +37,7 @@ pnpm test
 pnpm build
 ```
 
-The JEV contract tests verify request normalization and the official `state + model + questions` payload without sending test data to an external service.
+The JEV contract tests verify request normalization, complete score/constraint matrices, diagnostic Choice coverage, response distributions, and the official `state + model + questions` payload without sending test data to an external service.
 
 ## Key files
 

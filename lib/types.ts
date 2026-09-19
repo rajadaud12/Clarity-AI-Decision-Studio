@@ -43,6 +43,7 @@ export type JevQuestionPlan = {
   negativeMeaning: string;
   optionKey: string;
   criterionKey: string;
+  constraintKey: string;
   hardConstraint: boolean;
 };
 
@@ -59,12 +60,19 @@ export type DecisionCriterion = {
   weight: number;
 };
 
+export type DecisionConstraint = {
+  key: string;
+  label: string;
+  description: string;
+};
+
 export type JevPlan = {
   title: string;
   decisionQuestion: string;
   stateSummary: string;
   options: DecisionOption[];
   criteria: DecisionCriterion[];
+  hardConstraints: DecisionConstraint[];
   questions: JevQuestionPlan[];
 };
 
@@ -113,6 +121,11 @@ export type CompositeDecision = {
   confidence: number;
   needsReview: boolean;
   reviewReason: string;
+  diagnosticChoice?: {
+    optionKey: string;
+    confidence: number;
+    agreesWithComposite: boolean;
+  };
 };
 
 export type DecisionResponse = {

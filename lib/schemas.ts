@@ -175,6 +175,12 @@ const decisionCriterionSchema = z.object({
   weight: z.number().min(0).max(1),
 });
 
+const decisionConstraintSchema = z.object({
+  key: z.string().min(1).max(80),
+  label: z.string().min(1).max(120),
+  description: z.string().min(1).max(600),
+});
+
 export const jevQuestionPlanSchema = z.object({
   id: z.string().min(1).max(80),
   label: z.string().min(1).max(160),
@@ -186,6 +192,7 @@ export const jevQuestionPlanSchema = z.object({
   negativeMeaning: z.string().max(500).default(""),
   optionKey: z.string().max(80).default(""),
   criterionKey: z.string().max(80).default(""),
+  constraintKey: z.string().max(80).default(""),
   hardConstraint: z.boolean().default(false),
 });
 
@@ -195,7 +202,8 @@ export const jevPlanSchema = z.object({
   stateSummary: z.string().min(1).max(8_000),
   options: z.array(decisionOptionSchema).min(2).max(6),
   criteria: z.array(decisionCriterionSchema).min(1).max(6),
-  questions: z.array(jevQuestionPlanSchema).min(1).max(32),
+  hardConstraints: z.array(decisionConstraintSchema).max(8).default([]),
+  questions: z.array(jevQuestionPlanSchema).min(1).max(96),
 });
 
 const choiceAnswerSchema = z.object({
@@ -273,7 +281,7 @@ export const INTERVIEW_JSON_SCHEMA = {
 export const JEV_PLAN_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "decisionQuestion", "stateSummary", "options", "criteria", "questions"],
+  required: ["title", "decisionQuestion", "stateSummary", "options", "criteria", "hardConstraints", "questions"],
   properties: {
     title: { type: "string" },
     decisionQuestion: { type: "string" },
@@ -303,14 +311,26 @@ export const JEV_PLAN_JSON_SCHEMA = {
         },
       },
     },
-    questions: {
+    hardConstraints: {
       type: "array",
-      minItems: 1,
-      maxItems: 32,
+      maxItems: 8,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["id", "label", "type", "instructions", "options", "levels", "positiveMeaning", "negativeMeaning", "optionKey", "criterionKey", "hardConstraint"],
+        required: ["key", "label", "description"],
+        properties: {
+          key: { type: "string" }, label: { type: "string" }, description: { type: "string" },
+        },
+      },
+    },
+    questions: {
+      type: "array",
+      minItems: 1,
+      maxItems: 96,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "label", "type", "instructions", "options", "levels", "positiveMeaning", "negativeMeaning", "optionKey", "criterionKey", "constraintKey", "hardConstraint"],
         properties: {
           id: { type: "string" },
           label: { type: "string" },
@@ -333,6 +353,7 @@ export const JEV_PLAN_JSON_SCHEMA = {
           negativeMeaning: { type: "string" },
           optionKey: { type: "string" },
           criterionKey: { type: "string" },
+          constraintKey: { type: "string" },
           hardConstraint: { type: "boolean" },
         },
       },

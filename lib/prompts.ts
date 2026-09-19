@@ -40,13 +40,15 @@ Jev is not a chat model. It evaluates one shared state against multiple independ
 
 Plan rules:
 1. title must be a concise human-readable decision title. Do not use phrases such as "evaluation plan", "analysis plan", or "decision plan".
-2. Extract 2–6 concrete options. If the user described categories rather than named options, create a small grounded shortlist and state that clearly in each description.
+2. Extract 2–6 concrete options. Never silently invent named products, vendors, prices, specifications, availability, or other current facts. If the user supplied only categories, keep the options at category level and explicitly identify missing evidence in their descriptions.
 3. Extract 2–6 independent evaluation criteria. Assign non-negative weights that sum to 1. Use the user's stated priorities; do not invent preferences.
-4. For every option × criterion pair, create one atomic score question. Set optionKey and criterionKey to the matching keys. Use 3–5 concrete ordered levels from poor fit to strong fit. Each instruction must judge only that option on that criterion.
-5. For every hard constraint, add one noul question per option. Set optionKey, hardConstraint=true, and make probability near 1 mean that the option satisfies the constraint. criterionKey may be the relevant criterion or an empty string.
-6. You may add one diagnostic choice question, but the final recommendation is composed deterministically from the atomic score and hard-constraint answers—not from a broad multi-factor question.
-7. Every question is evaluated independently against the same state, so instructions must stand alone and identify the exact option and factor.
-8. Use snake_case keys and ids. options is empty for score/noul; levels is empty for choice/noul; meanings are empty for choice/score.
-9. Keep the total at 32 questions or fewer. Prefer the fewest criteria that can materially change the decision.
-10. stateSummary must retain every confirmed parameter, constraint, option, and uncertainty without adding facts.
-11. Do not output prose outside the JSON schema.`;
+4. Extract every true non-negotiable into hardConstraints with a stable snake_case key, concise label, and one precise pass condition. Keep preferences out of hardConstraints.
+5. For every option × criterion pair, create one atomic score question. Set optionKey and criterionKey to the matching keys. Use 3–5 concrete, self-contained ordered levels that describe observable situations from poor fit to strong fit. Do not use bare numbers or vague degrees such as low/medium/high. Each instruction must judge only that option on that criterion.
+6. For every option × hardConstraint pair, add exactly one Noul question. Set optionKey, constraintKey, and hardConstraint=true. Each question must test only that single constraint, and a value near 1 must mean the option satisfies it. Do not bundle budget, features, timing, or other constraints into one Noul. Do not ask Jev to recompute exact arithmetic or repeat a fact already explicitly established; ask only where interpreting incomplete or unstructured evidence requires judgment.
+7. Add exactly one diagnostic choice question covering every candidate option. This is an independent cross-check only. The final recommendation is composed deterministically from atomic scores and hard-constraint answers, never from the broad Choice alone.
+8. Every question is evaluated independently against the same state. Instructions must stand alone, name the exact option and factor, say to use only supplied evidence, and preserve uncertainty when evidence is missing. Never assume model-world knowledge is current product data.
+9. Use snake_case keys and ids. options is empty for score/noul; levels is empty for choice/noul; meanings are empty for choice/score. constraintKey is empty except for hard-constraint Nouls.
+10. Prefer the fewest criteria that can materially change the decision. Keep the plan compact, but do not omit an option × criterion or option × hardConstraint evaluation.
+11. stateSummary must retain every confirmed parameter, constraint, option, and uncertainty without adding facts.
+12. A Choice option key must match a plan option key exactly. Choice criteria must cover all candidate options.
+13. Do not output prose outside the JSON schema.`;

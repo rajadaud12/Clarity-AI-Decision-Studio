@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import botLogo from "@/lib/BotLogo.webp";
 import type {
   ChatMessage,
@@ -250,6 +250,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
   const recommendationDescription = composedOption?.description || primaryQuestion?.options.find((option) => option.key.replace(/[^a-z0-9]/gi, "_").toLowerCase() === choiceAnswer?.choice)?.description;
   const confidence = decision.composite?.confidence ?? choiceAnswer?.confidence;
   const rankings = decision.composite?.rankings || [];
+  const needsReview = Boolean(decision.composite?.needsReview);
   const hardConstraints = decision.plan.questions.filter((question) => question.type === "noul" && question.hardConstraint);
 
   function criterionScore(optionKey: string, criterionKey: string) {
@@ -287,7 +288,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
     const text = [
       `DECISION EVALUATION: ${decision.plan.title}`,
       `Question: ${decision.plan.decisionQuestion}`,
-      `\nRECOMMENDED PATH: ${recommendation} (${confidence !== undefined ? percent(confidence) : ""} confidence)`,
+      `\n${needsReview ? "LEADING PATH — REVIEW REQUIRED" : "RECOMMENDED PATH"}: ${recommendation} (${confidence !== undefined ? percent(confidence) : ""} confidence)`,
       `${recommendationDescription || ""}`,
       `\nRANKED OPTIONS:`,
       ...rankings.map((r, i) => `${i + 1}. ${r.label} — ${percent(r.score)} fit (${percent(r.confidence)} confidence)`),
@@ -322,7 +323,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
 
       <section className="recommendation-card">
         <div className="recommendation-copy">
-          <span className="card-kicker">Recommended path · Top evaluated choice</span>
+          <span className="card-kicker">{needsReview ? "Leading path · Review before deciding" : "Recommended path · Top evaluated fit"}</span>
           <h2>{recommendation}</h2>
           <p>{recommendationDescription || "JEV evaluated the confirmed brief against the typed decision criteria."}</p>
           <div className="recommendation-meta">
@@ -330,6 +331,12 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
             <span className="meta-badge"><Gauge size={15} /> {confidence !== undefined ? `${percent(confidence)} engine confidence` : "Typed evaluation"}</span>
             {leadMargin !== null && leadMargin > 0 && (
               <span className="meta-badge"><CheckCircle2 size={15} /> +{leadMargin}% ahead of 2nd option</span>
+            )}
+            {decision.composite?.diagnosticChoice && (
+              <span className="meta-badge">
+                {decision.composite.diagnosticChoice.agreesWithComposite ? <CheckCircle2 size={15} /> : <CircleAlert size={15} />}
+                Overall cross-check {decision.composite.diagnosticChoice.agreesWithComposite ? "agrees" : "differs"}
+              </span>
             )}
           </div>
         </div>
@@ -347,7 +354,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
       <section className="report-takeaway-card">
         <div className="takeaway-header">
           <Award size={18} />
-          <h3>Why this option won</h3>
+          <h3>{needsReview ? "Why this option currently leads" : "Why this option won"}</h3>
         </div>
         <div className="takeaway-grid">
           <div className="takeaway-item">
@@ -362,7 +369,10 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
           )}
           <div className="takeaway-item">
             <strong>Recommended next step</strong>
-            <p>Proceed with planning around <strong>{recommendation}</strong>, addressing any specific risks outlined in the criteria breakdown below.</p>
+            <p>{needsReview
+              ? <>Validate the flagged uncertainty before committing to <strong>{recommendation}</strong>.</>
+              : <>Proceed with planning around <strong>{recommendation}</strong>, addressing any specific risks outlined below.</>}
+            </p>
           </div>
         </div>
       </section>
@@ -464,7 +474,7 @@ function DecisionReport({ decision, parameters, onReset }: { decision: DecisionR
                     <div className="option-rank-title-row">
                       <h3>{ranking.label}</h3>
                       {isLead ? (
-                        <span className="recommended-pill">Recommended</span>
+                        <span className="recommended-pill">{needsReview ? "Leading option" : "Recommended"}</span>
                       ) : (
                         <span className="alternative-pill">Alternative {index + 1}</span>
                       )}
@@ -780,6 +790,7 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
+      console.log(">>> [AskJev] Dispatched brief to /api/decision. Evaluating with JEV API...");
       const response = await fetch("/api/decision", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -787,6 +798,12 @@ export default function Home() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "JEV could not complete the evaluation.");
+      if (body.jevPayload) {
+        console.log("==================== [JEV API OUTGOING PAYLOAD] ====================");
+        console.log("Exact payload evaluated by JEV API (https://api.typesafe.ai/v1/systemone):", body.jevPayload);
+        console.log("Formatted JSON:\n" + JSON.stringify(body.jevPayload, null, 2));
+        console.log("====================================================================");
+      }
       setDecision(body as DecisionResponse);
       requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
     } catch (reason) {

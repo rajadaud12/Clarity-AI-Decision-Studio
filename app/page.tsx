@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  Trash2,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -150,6 +151,89 @@ function SettingsModal({
           <span className={`connection-pill ${config?.jev.configured ? "" : "connection-pill--off"}`}>{config?.jev.configured ? "Connected" : "Not configured"}</span>
         </div>
         <button className="primary-button primary-button--full" onClick={onClose}>Save preference</button>
+      </section>
+    </div>
+  );
+}
+
+function DeleteConfirmModal({
+  open,
+  chatTitle,
+  isAll = false,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  chatTitle?: string;
+  isAll?: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="settings-modal delete-confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-confirm-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="modal-heading">
+          <div>
+            <span className="eyebrow eyebrow--coral">
+              <Trash2 size={13} /> Permanent deletion
+            </span>
+            <h2 id="delete-confirm-title">
+              {isAll ? "Delete all recent decisions?" : "Permanently delete this chat?"}
+            </h2>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Cancel deletion">
+            <X size={18} />
+          </button>
+        </div>
+
+        <p className="modal-copy">
+          {isAll ? (
+            <>
+              This will permanently delete <strong>all saved decision chats</strong> and their evaluations from your browser.
+            </>
+          ) : (
+            <>
+              This will permanently remove <strong>&ldquo;{chatTitle || "Untitled decision"}&rdquo;</strong> including its conversation history, structured criteria, and decision results.
+            </>
+          )}
+        </p>
+
+        <div className="delete-modal-warning-box">
+          <CircleAlert size={16} />
+          <span>This action cannot be undone. Data stored in your local session will be removed immediately.</span>
+        </div>
+
+        <div className="delete-modal-actions">
+          <button type="button" className="secondary-button" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="destructive-button"
+            onClick={onConfirm}
+            autoFocus
+          >
+            <Trash2 size={15} />
+            <span>{isAll ? "Delete all permanently" : "Delete permanently"}</span>
+          </button>
+        </div>
       </section>
     </div>
   );
@@ -642,6 +726,8 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatId, setChatId] = useState("");
   const [recentChats, setRecentChats] = useState<SavedChat[]>([]);
+  const [chatToDelete, setChatToDelete] = useState<SavedChat | null>(null);
+  const [clearAllConfirm, setClearAllConfirm] = useState(false);
   const [config, setConfig] = useState<Config | null>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -718,6 +804,26 @@ export default function Home() {
     setInput("");
     setError("");
     setSidebarOpen(false);
+  }
+
+  function handleDeleteChat(targetChat: SavedChat) {
+    if (chatId === targetChat.id) {
+      reset();
+    }
+    setRecentChats((current) => {
+      const next = current.filter((c) => c.id !== targetChat.id);
+      window.localStorage.setItem(RECENT_CHATS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setChatToDelete(null);
+  }
+
+  function handleClearAllChats() {
+    reset();
+    setRecentChats([]);
+    window.localStorage.removeItem(RECENT_CHATS_KEY);
+    window.localStorage.removeItem("clarity-recent-chats");
+    setClearAllConfirm(false);
   }
 
   async function requestInterview(nextMessages: ChatMessage[]) {
@@ -848,6 +954,22 @@ export default function Home() {
   return (
     <main className={`app-shell ${hasConversation || decision ? "app-shell--active" : "app-shell--landing"}`}>
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} provider={provider} setProvider={setProvider} config={config} />
+      <DeleteConfirmModal
+        open={Boolean(chatToDelete) || clearAllConfirm}
+        chatTitle={chatToDelete?.title}
+        isAll={clearAllConfirm}
+        onClose={() => {
+          setChatToDelete(null);
+          setClearAllConfirm(false);
+        }}
+        onConfirm={() => {
+          if (clearAllConfirm) {
+            handleClearAllChats();
+          } else if (chatToDelete) {
+            handleDeleteChat(chatToDelete);
+          }
+        }}
+      />
       <div className="app-layout">
         <aside className={`history-sidebar ${sidebarOpen ? "history-sidebar--open" : ""}`}>
           <div className="sidebar-brand-row">
@@ -856,11 +978,47 @@ export default function Home() {
           </div>
           <button className="new-chat-button" onClick={reset}><Plus size={16} /> New decision</button>
           <div className="chat-history">
-            <span className="chat-history-label">Recent</span>
+            <div className="chat-history-header">
+              <span className="chat-history-label">Recent</span>
+              {recentChats.length > 0 && (
+                <button
+                  type="button"
+                  className="chat-history-clear-btn"
+                  onClick={() => setClearAllConfirm(true)}
+                  title="Clear all recent chats"
+                  aria-label="Clear all recent chats"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
             {recentChats.length > 0 ? recentChats.map((chat) => (
-              <button className={chat.id === chatId ? "chat-history-item chat-history-item--active" : "chat-history-item"} key={chat.id} onClick={() => openSavedChat(chat)}>
-                <MessageSquareText size={15} /><span>{chat.title}</span>
-              </button>
+              <div
+                className={`chat-history-row ${chat.id === chatId ? "chat-history-row--active" : ""}`}
+                key={chat.id}
+              >
+                <button
+                  type="button"
+                  className="chat-history-select-btn"
+                  onClick={() => openSavedChat(chat)}
+                  title={chat.title}
+                >
+                  <MessageSquareText size={15} />
+                  <span>{chat.title}</span>
+                </button>
+                <button
+                  type="button"
+                  className="chat-history-delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setChatToDelete(chat);
+                  }}
+                  title="Delete chat permanently"
+                  aria-label={`Permanently delete ${chat.title}`}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             )) : <p>Your recent decisions will appear here.</p>}
           </div>
           <button className="sidebar-settings" onClick={() => setSettingsOpen(true)}><Settings2 size={16} /><span>Settings</span></button>
@@ -871,6 +1029,29 @@ export default function Home() {
           <header className="topbar">
             <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open recent chats"><Menu size={19} /></button>
             <span className="topbar-title">{hasConversation ? recentChats.find((chat) => chat.id === chatId)?.title || "Current decision" : "AskJev"}</span>
+            {hasConversation && (
+              <button
+                type="button"
+                className="topbar-delete-btn"
+                onClick={() => {
+                  const currentChat = recentChats.find((c) => c.id === chatId) || {
+                    id: chatId,
+                    title: messages.find((m) => m.role === "user")?.content || "Current decision",
+                    updatedAt: new Date().toISOString(),
+                    provider,
+                    messages,
+                    turn,
+                    decision,
+                  };
+                  setChatToDelete(currentChat);
+                }}
+                title="Delete current decision permanently"
+                aria-label="Delete current decision permanently"
+              >
+                <Trash2 size={15} />
+                <span className="topbar-delete-label">Delete chat</span>
+              </button>
+            )}
           </header>
 
           <section className="workspace">

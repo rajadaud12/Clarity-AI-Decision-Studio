@@ -15,7 +15,6 @@ import {
   Plus,
   RotateCcw,
   Send,
-  Settings2,
   ShieldCheck,
   Sparkles,
   Target,
@@ -26,7 +25,8 @@ import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import botLogo from "@/lib/BotLogo.webp";
 import logoImg from "@/public/Logo.webp";
-import SoftAurora from "./SoftAurora";
+import LiquidFilm from "./LiquidFilm";
+import "./LiquidFilm.css";
 import type {
   ChatMessage,
   DecisionParameter,
@@ -959,23 +959,8 @@ export default function Home() {
 
   return (
     <main className={`app-shell ${hasConversation || decision ? "app-shell--active" : "app-shell--landing"}`}>
-      <div className="soft-aurora-bg-wrapper" aria-hidden="true">
-        <SoftAurora
-          speed={0.6}
-          scale={1.5}
-          brightness={1}
-          color1="#f7f7f7"
-          color2="#e100ff"
-          noiseFrequency={2.5}
-          noiseAmplitude={1}
-          bandHeight={0.5}
-          bandSpread={1}
-          octaveDecay={0.1}
-          layerOffset={0}
-          colorSpeed={1}
-          enableMouseInteraction
-          mouseInfluence={0.1}
-        />
+      <div className="liquid-film-bg-wrapper" aria-hidden="true">
+        <LiquidFilm style={{ minWidth: "100%", minHeight: "100%", width: "100%", height: "100%" }} />
       </div>
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} provider={provider} setProvider={setProvider} config={config} />
       <DeleteConfirmModal
@@ -1045,7 +1030,6 @@ export default function Home() {
               </div>
             )) : <p>Your recent decisions will appear here.</p>}
           </div>
-          <button className="sidebar-settings" onClick={() => setSettingsOpen(true)}><Settings2 size={16} /><span>Settings</span></button>
         </aside>
         {sidebarOpen && <button className="sidebar-scrim" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" />}
 

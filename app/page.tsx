@@ -1043,7 +1043,7 @@ export default function Home() {
             ) : !hasConversation ? (
               <div className="welcome">
                 <span className="welcome-kicker"><BotLogo className="welcome-kicker-logo" /> Guided decisions</span>
-                <h1>Move from uncertainty<br /><span>to a decision you trust.</span></h1>
+                <h1>Your Decision Backed <br /><span>By Probabilities.</span></h1>
                 <p>Share the decision in your own words. Verdict asks only what matters, then evaluates your options with JEV.</p>
                 <form className="hero-composer" onSubmit={handleSubmit}>
                   <div className="hero-input"><textarea ref={textareaRef} value={input} onChange={(event) => setInput(event.target.value)} placeholder="What are you trying to decide?" rows={3} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(input); } }} /></div>

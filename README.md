@@ -1,6 +1,6 @@
-# AskJev Decision Studio
+# Verdict Decision Studio
 
-A guided decision application built with Next.js. AskJev turns an ambiguous request into a confirmed, structured brief, converts that brief into typed JEV questions, and visualizes JEV's probabilistic result.
+A guided decision application built with Next.js. Verdict turns an ambiguous request into a confirmed, structured brief, converts that brief into typed JEV questions, and visualizes JEV's probabilistic result.
 
 ## Flow
 

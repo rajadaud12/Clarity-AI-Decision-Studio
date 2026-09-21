@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const conversationContext = input.messages
       .filter((m) => m.content.trim())
       .slice(-10)
-      .map((m) => `${m.role === "user" ? "User" : "AskJev"}: ${m.content}`)
+      .map((m) => `${m.role === "user" ? "User" : "Verdict"}: ${m.content}`)
       .join("\n");
 
     const architectInput = [

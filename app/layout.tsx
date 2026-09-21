@@ -11,19 +11,16 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#fbfcfe",
+  themeColor: "#0b0f14",
 };
 
 export const metadata: Metadata = {
-  title: "AskJev — Decision Intelligence",
+  title: "Verdict",
   description: "Turn an uncertain question into a clear, evidence-shaped decision.",
   icons: {
-    icon: [
-      { url: "/BotLogo.webp", type: "image/webp" },
-      { url: "/favicon.ico" },
-    ],
-    shortcut: "/BotLogo.webp",
-    apple: "/BotLogo.webp",
+    icon: "/favicon.ico?v=4",
+    shortcut: "/favicon.ico?v=4",
+    apple: "/favicon.ico?v=4",
   },
 };
 

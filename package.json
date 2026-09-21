@@ -1,5 +1,5 @@
 {
-  "name": "askjev-decision-studio",
+  "name": "verdict-decision-studio",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,6 +14,7 @@
     "@hookform/resolvers": "^5.2.2",
     "lucide-react": "^0.544.0",
     "next": "^16.0.0",
+    "ogl": "^1.0.11",
     "openai": "^5.23.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

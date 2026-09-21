@@ -25,6 +25,8 @@ import {
 import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import botLogo from "@/lib/BotLogo.webp";
+import logoImg from "@/public/Logo.webp";
+import SoftAurora from "./SoftAurora";
 import type {
   ChatMessage,
   DecisionParameter,
@@ -48,7 +50,7 @@ type SavedChat = {
   decision: DecisionResponse | null;
 };
 
-const RECENT_CHATS_KEY = "askjev-recent-chats";
+const RECENT_CHATS_KEY = "verdict-recent-chats";
 
 const starters = [
   {
@@ -86,6 +88,10 @@ function percent(value: number) {
 
 function BotLogo({ className = "" }: { className?: string }) {
   return <Image className={className} src={botLogo} alt="" priority />;
+}
+
+function SidebarLogo({ className = "" }: { className?: string }) {
+  return <Image className={`sidebar-logo-img ${className}`.trim()} src={logoImg} alt="Verdict" width={215} height={72} priority />;
 }
 
 function ModelMark({ provider }: { provider: Provider }) {
@@ -263,7 +269,7 @@ function MessageBubble({
     <div className={`message-row ${assistant ? "message-row--assistant" : "message-row--user"}`}>
       {assistant && <div className="assistant-avatar"><BotLogo /></div>}
       <div className="message-wrap">
-        {assistant && <span className="message-author">AskJev</span>}
+        {assistant && <span className="message-author">Verdict</span>}
         {question?.prompt ? (
           <div className="message-bubble message-bubble--question">
             {message.intro && <p className="question-intro">{message.intro}</p>}
@@ -736,8 +742,8 @@ export default function Home() {
   const parameters = turn?.parameters || [];
 
   useEffect(() => {
-    const saved = (window.localStorage.getItem("askjev-provider") || window.localStorage.getItem("clarity-provider")) as Provider | null;
-    const storedChats = window.localStorage.getItem(RECENT_CHATS_KEY) || window.localStorage.getItem("clarity-recent-chats");
+    const saved = (window.localStorage.getItem("verdict-provider") || window.localStorage.getItem("askjev-provider") || window.localStorage.getItem("clarity-provider")) as Provider | null;
+    const storedChats = window.localStorage.getItem(RECENT_CHATS_KEY) || window.localStorage.getItem("askjev-recent-chats") || window.localStorage.getItem("clarity-recent-chats");
     queueMicrotask(() => {
       setMounted(true);
       setChatId(uid());
@@ -780,7 +786,7 @@ export default function Home() {
 
   function setProvider(next: Provider) {
     setProviderState(next);
-    window.localStorage.setItem("askjev-provider", next);
+    window.localStorage.setItem("verdict-provider", next);
   }
 
   function reset() {
@@ -852,7 +858,7 @@ export default function Home() {
       if (!response.ok) {
         const message = typeof body === "object" && body && "error" in body && typeof body.error === "string"
           ? body.error
-          : "AskJev could not continue this response. Please retry in a moment.";
+          : "Verdict could not continue this response. Please retry in a moment.";
         throw new Error(message);
       }
       const nextTurn = body as InterviewTurn;
@@ -953,6 +959,24 @@ export default function Home() {
 
   return (
     <main className={`app-shell ${hasConversation || decision ? "app-shell--active" : "app-shell--landing"}`}>
+      <div className="soft-aurora-bg-wrapper" aria-hidden="true">
+        <SoftAurora
+          speed={0.6}
+          scale={1.5}
+          brightness={1}
+          color1="#f7f7f7"
+          color2="#e100ff"
+          noiseFrequency={2.5}
+          noiseAmplitude={1}
+          bandHeight={0.5}
+          bandSpread={1}
+          octaveDecay={0.1}
+          layerOffset={0}
+          colorSpeed={1}
+          enableMouseInteraction
+          mouseInfluence={0.1}
+        />
+      </div>
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} provider={provider} setProvider={setProvider} config={config} />
       <DeleteConfirmModal
         open={Boolean(chatToDelete) || clearAllConfirm}
@@ -973,7 +997,7 @@ export default function Home() {
       <div className="app-layout">
         <aside className={`history-sidebar ${sidebarOpen ? "history-sidebar--open" : ""}`}>
           <div className="sidebar-brand-row">
-            <button className="brand" onClick={reset} aria-label="AskJev home"><span className="brand-mark"><BotLogo /></span><span>AskJev</span></button>
+            <button className="brand" onClick={reset} aria-label="Verdict home"><SidebarLogo /></button>
             <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar"><X size={18} /></button>
           </div>
           <button className="new-chat-button" onClick={reset}><Plus size={16} /> New decision</button>
@@ -1028,7 +1052,7 @@ export default function Home() {
         <div className="main-column">
           <header className="topbar">
             <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open recent chats"><Menu size={19} /></button>
-            <span className="topbar-title">{hasConversation ? recentChats.find((chat) => chat.id === chatId)?.title || "Current decision" : "AskJev"}</span>
+            <span className="topbar-title">{hasConversation ? recentChats.find((chat) => chat.id === chatId)?.title || "Current decision" : "Verdict"}</span>
             {hasConversation && (
               <button
                 type="button"
@@ -1062,7 +1086,7 @@ export default function Home() {
               <div className="welcome">
                 <span className="welcome-kicker"><BotLogo className="welcome-kicker-logo" /> Guided decisions</span>
                 <h1>Move from uncertainty<br /><span>to a decision you trust.</span></h1>
-                <p>Share the decision in your own words. AskJev asks only what matters, then evaluates your options with JEV.</p>
+                <p>Share the decision in your own words. Verdict asks only what matters, then evaluates your options with JEV.</p>
                 <form className="hero-composer" onSubmit={handleSubmit}>
                   <div className="hero-input"><textarea ref={textareaRef} value={input} onChange={(event) => setInput(event.target.value)} placeholder="What are you trying to decide?" rows={3} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(input); } }} /></div>
                   <div className="composer-footer"><span>Start with the rough version—we’ll clarify it together.</span><button type="submit" disabled={!input.trim()} aria-label="Continue"><ArrowRight size={18} /></button></div>

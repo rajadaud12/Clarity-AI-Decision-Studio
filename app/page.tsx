@@ -10,7 +10,6 @@ import {
   CircleAlert,
   Copy,
   Gauge,
-  Menu,
   MessageSquareText,
   Plus,
   RotateCcw,
@@ -23,7 +22,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import botLogo from "@/lib/BotLogo.webp";
+
 import logoImg from "@/public/Logo.webp";
 import LiquidFilm from "./LiquidFilm";
 import "./LiquidFilm.css";
@@ -87,7 +86,7 @@ function percent(value: number) {
 }
 
 function BotLogo({ className = "" }: { className?: string }) {
-  return <Image className={className} src={botLogo} alt="" priority />;
+  return <Image className={className} src="/ShortLogo.webp" alt="" width={40} height={40} priority />;
 }
 
 function SidebarLogo({ className = "" }: { className?: string }) {
@@ -1034,33 +1033,7 @@ export default function Home() {
         {sidebarOpen && <button className="sidebar-scrim" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" />}
 
         <div className="main-column">
-          <header className="topbar">
-            <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open recent chats"><Menu size={19} /></button>
-            <span className="topbar-title">{hasConversation ? recentChats.find((chat) => chat.id === chatId)?.title || "Current decision" : "Verdict"}</span>
-            {hasConversation && (
-              <button
-                type="button"
-                className="topbar-delete-btn"
-                onClick={() => {
-                  const currentChat = recentChats.find((c) => c.id === chatId) || {
-                    id: chatId,
-                    title: messages.find((m) => m.role === "user")?.content || "Current decision",
-                    updatedAt: new Date().toISOString(),
-                    provider,
-                    messages,
-                    turn,
-                    decision,
-                  };
-                  setChatToDelete(currentChat);
-                }}
-                title="Delete current decision permanently"
-                aria-label="Delete current decision permanently"
-              >
-                <Trash2 size={15} />
-                <span className="topbar-delete-label">Delete chat</span>
-              </button>
-            )}
-          </header>
+
 
           <section className="workspace">
           <section className={`conversation-panel ${!hasConversation && !decision ? "conversation-panel--welcome" : ""}`}>

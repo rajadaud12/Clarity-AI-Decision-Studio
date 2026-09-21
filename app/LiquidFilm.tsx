@@ -36,6 +36,7 @@ uniform vec2 uRes;
 uniform float uTime;
 uniform vec3 uC1;
 uniform vec3 uC2;
+uniform vec3 uC3;
 uniform float uSize;
 uniform float uAngle;
 out vec4 o;
@@ -82,8 +83,18 @@ void main() {
     float g = GLOW / (dot(q, q) + SOFT) * (0.25 + breath * 0.4);
     float r = length(u);
     float k = sin(i * CYCLE + t * 1.2 + r * HUE_TRAVEL) * 0.5 + 0.5;
-    col += g * mix(uC1, uC2, k) * (0.62 + 0.5 * k) * exp2(-r * FALLOFF);
+    vec3 tone = mix(uC1, uC2, k);
+
+    // Woven subtly into the flowing gradients: small, delicate presence of color 3
+    float flowWave = sin(i * 0.28 + t * 0.75 + r * 2.4);
+    float timePulse = smoothstep(0.2, 0.8, sin(uTime * 0.25)) * 0.5 + 0.5;
+    float c3Streak = smoothstep(0.92, 0.995, flowWave) * timePulse; // thin, delicate streak along the flow
+    vec3 c3Tone = uC3 * 1.4;
+    tone = mix(tone, c3Tone, c3Streak * 0.75);
+
+    col += g * tone * (0.62 + 0.5 * k) * exp2(-r * FALLOFF);
   }
+
   vec3 x = max(col * GAIN, 0.0);
   col = (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);
   col = pow(clamp(col, 0.0, 1.0), vec3(0.85, 0.92, 0.98));
@@ -342,6 +353,7 @@ const DEFAULTS = {
     background: "#000000",
     color1: "#062303",
     color2: "#0E0429",
+    color3: "#291204",
 }
 
 interface LiquidFilmProps {
@@ -349,6 +361,7 @@ interface LiquidFilmProps {
     background?: string
     color1?: string
     color2?: string
+    color3?: string
     speed?: number
     size?: number
     angle?: number
@@ -366,6 +379,7 @@ function __OriginkitBase_LiquidFilm(props: LiquidFilmProps) {
         background = DEFAULTS.background,
         color1 = DEFAULTS.color1,
         color2 = DEFAULTS.color2,
+        color3 = DEFAULTS.color3,
         speed = 50,
         size = 147,
         angle = 73,
@@ -380,11 +394,12 @@ function __OriginkitBase_LiquidFilm(props: LiquidFilmProps) {
     const rootRef = useRef<HTMLDivElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
-    const vRef = useRef({ background, color1, color2, speed: 1, size: 1, angle: 0, flow: 1, ripple: 1, hover: 1, reach: 200 })
+    const vRef = useRef({ background, color1, color2, color3, speed: 1, size: 1, angle: 0, flow: 1, ripple: 1, hover: 1, reach: 200 })
     vRef.current = {
         background,
         color1,
         color2,
+        color3,
 
         speed: clampN(num(speed, 50), 0, 100) / 50,
         size: clampN(num(size, 100), 50, 200) / 100,
@@ -408,7 +423,7 @@ function __OriginkitBase_LiquidFilm(props: LiquidFilmProps) {
         const field = link(gl, FIELD_SRC, "field")
         const finish = link(gl, FINISH_SRC, "finish")
         if (!field || !finish) return
-        const uf = locations(gl, field, ["uRes", "uTime", "uC1", "uC2", "uSize", "uAngle"])
+        const uf = locations(gl, field, ["uRes", "uTime", "uC1", "uC2", "uC3", "uSize", "uAngle"])
         const un = locations(gl, finish, ["uField", "uRes", "uTime", "uBg", "uPaper", "uPR", "uMouse", "uOn", "uReach", "uVel", "uRip", "uRipN", "uFlow"])
         const vao = gl.createVertexArray()
         gl.bindVertexArray(vao)
@@ -495,6 +510,7 @@ function __OriginkitBase_LiquidFilm(props: LiquidFilmProps) {
 
             const c1 = color(v.color1, DEFAULTS.color1)
             const c2 = color(v.color2, DEFAULTS.color2)
+            const c3 = color(v.color3, DEFAULTS.color3)
             const bg = color(v.background, DEFAULTS.background)
             const bgLum = 0.2126 * bg[0] + 0.7152 * bg[1] + 0.0722 * bg[2]
 
@@ -505,6 +521,7 @@ function __OriginkitBase_LiquidFilm(props: LiquidFilmProps) {
             gl.uniform1f(uf.uTime, clock)
             gl.uniform3f(uf.uC1, c1[0], c1[1], c1[2])
             gl.uniform3f(uf.uC2, c2[0], c2[1], c2[2])
+            gl.uniform3f(uf.uC3, c3[0], c3[1], c3[2])
             gl.uniform1f(uf.uSize, v.size)
             gl.uniform1f(uf.uAngle, v.angle)
             gl.drawArrays(gl.TRIANGLES, 0, 3)
@@ -574,17 +591,18 @@ function __OriginkitBase_LiquidFilm(props: LiquidFilmProps) {
 }
 
 const __originkitPresetProps = {
-  "background": "#000000",
-  "color1": "#062303",
-  "color2": "#0E0429",
-  "speed": 30,
-  "size": 200,
-  "angle": 88,
-  "ripple": 115,
-  "hover": 0,
-  "reach": 620
+    "background": "#000000",
+    "color1": "#062303",
+    "color2": "#0E0429",
+    "color3": "#291204",
+    "speed": 30,
+    "size": 200,
+    "angle": 88,
+    "ripple": 115,
+    "hover": 0,
+    "reach": 620
 };
 
 export default function LiquidFilm(props: Record<string, unknown>) {
-  return <__OriginkitBase_LiquidFilm {...(__originkitPresetProps as Record<string, unknown>)} {...props} />;
+    return <__OriginkitBase_LiquidFilm {...(__originkitPresetProps as Record<string, unknown>)} {...props} />;
 }

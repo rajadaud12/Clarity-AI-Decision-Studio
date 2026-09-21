@@ -10,6 +10,7 @@ import {
   ChevronDown,
   CircleAlert,
   Copy,
+  Menu,
   Gauge,
   MessageSquareText,
   Plus,
@@ -1034,7 +1035,7 @@ export default function Home() {
         {sidebarOpen && <button className="sidebar-scrim" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" />}
 
         <div className="main-column">
-
+          <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open recent chats"><Menu size={19} /></button>
 
           <section className="workspace">
           <section className={`conversation-panel ${!hasConversation && !decision ? "conversation-panel--welcome" : ""}`}>

@@ -15,6 +15,7 @@ import {
   MessageSquareText,
   Plus,
   RotateCcw,
+  Search,
   Send,
   ShieldCheck,
   Sparkles,
@@ -91,7 +92,7 @@ function BotLogo({ className = "" }: { className?: string }) {
 }
 
 function SidebarLogo({ className = "" }: { className?: string }) {
-  return <Image className={`sidebar-logo-img ${className}`.trim()} src="/ShortLogo.webp" alt="Verdict" width={48} height={48} priority />;
+  return <Image className={`sidebar-logo-img ${className}`.trim()} src="/ShortLogo.webp" alt="Verdict" width={42} height={42} priority />;
 }
 
 function ModelMark({ provider }: { provider: Provider }) {
@@ -730,16 +731,30 @@ export default function Home() {
   const [error, setError] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [chatId, setChatId] = useState("");
   const [recentChats, setRecentChats] = useState<SavedChat[]>([]);
   const [chatToDelete, setChatToDelete] = useState<SavedChat | null>(null);
   const [clearAllConfirm, setClearAllConfirm] = useState(false);
   const [config, setConfig] = useState<Config | null>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const hasConversation = messages.length > 0;
   const parameters = turn?.parameters || [];
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const visibleChats = normalizedSearch
+    ? recentChats.filter((chat) =>
+        chat.title.toLowerCase().includes(normalizedSearch) ||
+        chat.messages.some((message) => message.content.toLowerCase().includes(normalizedSearch))
+      )
+    : recentChats;
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
 
   useEffect(() => {
     const saved = (window.localStorage.getItem("verdict-provider") || window.localStorage.getItem("askjev-provider") || window.localStorage.getItem("clarity-provider")) as Provider | null;
@@ -983,13 +998,47 @@ export default function Home() {
         <aside className={`history-sidebar ${sidebarOpen ? "history-sidebar--open" : ""}`}>
           <div className="sidebar-brand-row">
             <button className="brand" onClick={reset} aria-label="Verdict home"><SidebarLogo /></button>
-            <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar"><X size={18} /></button>
+            <div className="sidebar-brand-actions">
+              <button
+                type="button"
+                className="sidebar-search-toggle"
+                onClick={() => {
+                  setSearchOpen((current) => !current);
+                  setSearchQuery("");
+                }}
+                aria-label={searchOpen ? "Close chat search" : "Search chats"}
+                aria-expanded={searchOpen}
+                aria-controls="sidebar-chat-search"
+              >
+                {searchOpen ? <X size={18} /> : <Search size={18} />}
+              </button>
+              <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar"><X size={18} /></button>
+            </div>
           </div>
           <button className="new-chat-button" onClick={reset}><Plus size={16} /> New decision</button>
+          {searchOpen && (
+            <div className="sidebar-search" role="search" id="sidebar-chat-search">
+              <Search size={16} aria-hidden="true" />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setSearchOpen(false);
+                    setSearchQuery("");
+                  }
+                }}
+                placeholder="Search chats"
+                aria-label="Search chats"
+              />
+            </div>
+          )}
           <div className="chat-history">
             <div className="chat-history-header">
-              <span className="chat-history-label">Recent</span>
-              {recentChats.length > 0 && (
+              <span className="chat-history-label">{normalizedSearch ? "Results" : "Recent"}</span>
+              {recentChats.length > 0 && !normalizedSearch && (
                 <button
                   type="button"
                   className="chat-history-clear-btn"
@@ -1001,7 +1050,7 @@ export default function Home() {
                 </button>
               )}
             </div>
-            {recentChats.length > 0 ? recentChats.map((chat) => (
+            {visibleChats.length > 0 ? visibleChats.map((chat) => (
               <div
                 className={`chat-history-row ${chat.id === chatId ? "chat-history-row--active" : ""}`}
                 key={chat.id}
@@ -1028,7 +1077,7 @@ export default function Home() {
                   <Trash2 size={13} />
                 </button>
               </div>
-            )) : <p>Your recent decisions will appear here.</p>}
+            )) : <p>{normalizedSearch ? "No chats found." : "Your recent decisions will appear here."}</p>}
           </div>
         </aside>
         {sidebarOpen && <button className="sidebar-scrim" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" />}

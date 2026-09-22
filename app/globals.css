@@ -87,6 +87,21 @@ button { -webkit-tap-highlight-color: transparent; }
   backdrop-filter: blur(24px);
 }
 .sidebar-brand-row { min-height: 60px; padding: 0 2px; display: flex; align-items: center; justify-content: space-between; }
+.sidebar-brand-actions { display: flex; align-items: center; gap: 4px; }
+.sidebar-search-toggle {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #8b97a5;
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease;
+}
+.sidebar-search-toggle:hover,
+.sidebar-search-toggle:focus-visible { color: #ffffff; background: rgba(255, 255, 255, .06); }
 
 /* Mobile sidebar toggle — hidden on desktop */
 .mobile-menu {
@@ -112,8 +127,8 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* Sidebar Site Logo */
 .sidebar-logo-img {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
   object-position: left center;
   display: block;
@@ -165,6 +180,31 @@ button { -webkit-tap-highlight-color: transparent; }
   color: #ffffff;
   transform: translateY(-1px);
 }
+.sidebar-search {
+  height: 40px;
+  margin-top: 16px;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .04);
+  color: #8492a1;
+}
+.sidebar-search:focus-within { border-color: #6b7de9; }
+.sidebar-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 12px;
+}
+.sidebar-search input::placeholder { color: #717d8a; }
+.sidebar-search + .chat-history { margin-top: 16px; }
 .chat-history { flex: 1; min-height: 0; margin-top: 23px; overflow-y: auto; }
 .chat-history-header { display: flex; align-items: center; justify-content: space-between; padding: 0 10px 8px; }
 .chat-history-header .chat-history-label { padding: 0; }

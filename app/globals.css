@@ -112,9 +112,8 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* Sidebar Site Logo */
 .sidebar-logo-img {
-  width: auto;
-  height: 58px;
-  max-width: 215px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   object-position: left center;
   display: block;

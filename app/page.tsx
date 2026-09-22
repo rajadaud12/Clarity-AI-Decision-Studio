@@ -25,7 +25,6 @@ import {
 import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-import logoImg from "@/public/Logo.webp";
 import LiquidFilm from "./LiquidFilm";
 import "./LiquidFilm.css";
 import type {
@@ -92,7 +91,7 @@ function BotLogo({ className = "" }: { className?: string }) {
 }
 
 function SidebarLogo({ className = "" }: { className?: string }) {
-  return <Image className={`sidebar-logo-img ${className}`.trim()} src={logoImg} alt="Verdict" width={215} height={72} priority />;
+  return <Image className={`sidebar-logo-img ${className}`.trim()} src="/ShortLogo.webp" alt="Verdict" width={48} height={48} priority />;
 }
 
 function ModelMark({ provider }: { provider: Provider }) {
